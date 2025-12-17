@@ -14,6 +14,27 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+const initDb = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS destinations (
+      id SERIAL PRIMARY KEY,
+      country VARCHAR(100) NOT NULL,
+      capital VARCHAR(100),
+      population BIGINT,
+      region VARCHAR(100),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  try {
+    await pool.query(createTableQuery);
+    console.log('✅ destinations table ready');
+  } catch (err) {
+    console.error('❌ Failed to initialize database', err);
+    process.exit(1);
+  }
+};
+
 const COUNTRIES_API_BASE_URL = process.env.COUNTRIES_API_BASE_URL || 'https://restcountries.com/v3.1';
 
 app.get('/api/destinations', async (req, res) => {
@@ -54,6 +75,8 @@ app.delete('/api/destinations/:id', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+initDb().then(() => {
+  app.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+  });
 });
